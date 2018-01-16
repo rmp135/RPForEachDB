@@ -25,7 +25,7 @@ namespace RPForEachDB.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("Data Source=optsql03\\sqlex2012;Trusted_Connection=True")]
+        [global::System.Configuration.DefaultSettingValueAttribute("optsql03\\sqlex2012")]
         public string ConnectionString {
             get {
                 return ((string)(this["ConnectionString"]));

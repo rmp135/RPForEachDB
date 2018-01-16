@@ -14,7 +14,7 @@ namespace RPForEachDB
         public SqlConnection Build()
         {
             var connectionString = Settings.Default.ConnectionString;
-            var connection = new SqlConnection(connectionString);
+            var connection = new SqlConnection($"Data Source={connectionString};Trusted_Connection=True");
             if (connection.State == System.Data.ConnectionState.Closed)
                 connection.Open();
             return connection;

@@ -3,7 +3,7 @@
   <Profiles />
   <Settings>
     <Setting Name="ConnectionString" Type="System.String" Scope="User">
-      <Value Profile="(Default)">Data Source=***REMOVED***;Trusted_Connection=True</Value>
+      <Value Profile="(Default)">***REMOVED***</Value>
     </Setting>
     <Setting Name="SelectedDatabases" Type="System.Collections.Specialized.StringCollection" Scope="User">
       <Value Profile="(Default)">&lt;?xml version="1.0" encoding="utf-16"?&gt;

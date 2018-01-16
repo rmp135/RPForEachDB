@@ -23,14 +23,6 @@ using RPForEachDB.Properties;
 
 namespace RPForEachDB
 {
-    public enum DatabaseStatus {
-        AVAILABLE,
-        RUNNING,
-        COMPLETE,
-        COMPLETEWITHMESSAGES,
-        ERROR
-    }
-
     public class DatabaseGridItem: INotifyPropertyChanged
     {
         public string Name { get; set; }
@@ -83,6 +75,14 @@ namespace RPForEachDB
     /// </summary>
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
+        public string ConnectionString
+        {
+            get => Settings.Default.ConnectionString;
+            set
+            {
+                Settings.Default.ConnectionString = value;
+            }
+        }
         public ObservableCollection<DatabaseGridItem> Databases { get; set; }
         private DatabaseGridItem _currentItem;
         public DatabaseGridItem CurrentItem
@@ -112,21 +112,36 @@ namespace RPForEachDB
         }
         public MainWindow()
         {
-            var connectionFactory = new ConnectionFactory();
+            Databases = new ObservableCollection<DatabaseGridItem>();
+            PopulateDatabases();
             DataContext = this;
-            using (var connection = connectionFactory.Build())
-            {
-                var names = connection.Query<string>("SELECT Name FROM master.dbo.sysdatabases WHERE DATABASEPROPERTYEX(Name, 'Status') = 'ONLINE'");
-                Databases = new ObservableCollection<DatabaseGridItem>(
-                    names.Select(name => new DatabaseGridItem
-                    {
-                        Name = name,
-                        Status = "Available"
-                    })
-                );
-            }
             InitializeComponent();
-            SetSelectedDatabases(Databases);
+        }
+
+        private void OnGetDatabsesBtnClick(object sender, RoutedEventArgs args)
+        {
+            PopulateDatabases();
+        }
+
+        private void PopulateDatabases()
+        {
+            Databases.Clear();
+            try
+            {
+                using (var connection = new ConnectionFactory().Build())
+                {
+                    var names = connection.Query<string>("SELECT Name FROM master.dbo.sysdatabases WHERE DATABASEPROPERTYEX(Name, 'Status') = 'ONLINE'");
+                    foreach(var name in names)
+                    {
+                        Databases.Add(new DatabaseGridItem { Name = name, Status = "Available" });
+                    }
+                }
+                SetSelectedDatabases();
+            }
+            catch (Exception)
+            {
+                MessageBox.Show("Unable to retrieve databases.");
+            }
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -197,10 +212,10 @@ namespace RPForEachDB
             });
         }
 
-        private void SetSelectedDatabases(IEnumerable<DatabaseGridItem> gridItems)
+        private void SetSelectedDatabases()
         {
             var databases = Settings.Default.SelectedDatabases.Cast<string>();
-            foreach(var db in gridItems)
+            foreach(var db in Databases)
             {
                 db.Checked = databases.Contains(db.Name);
             };
