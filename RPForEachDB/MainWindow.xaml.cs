@@ -143,6 +143,11 @@ namespace RPForEachDB
             worker.WorkerReportsProgress = true;
             var connectionFactory = new ConnectionFactory();
             var filteredDatabases = Databases.Where(d => d.Checked).ToList();
+            var statements = Regex.Split(
+                CurrentSQL,
+                @"^[\t\r\n]*GO[\t\r\n]*\d*[\t\r\n]*(?:--.*)?$",
+                RegexOptions.Multiline | RegexOptions.IgnorePatternWhitespace | RegexOptions.IgnoreCase
+            ).Where(s => !String.IsNullOrWhiteSpace(s));
             foreach (var database in filteredDatabases)
             {
                 worker.DoWork += new DoWorkEventHandler(
@@ -160,26 +165,19 @@ namespace RPForEachDB
                         try
                         {
                             database.Status = DatabaseStatus.RUNNING;
-                            var statements = Regex.Split(
-                                CurrentSQL,
-                                @"^[\t\r\n]*GO[\t\r\n]*\d*[\t\r\n]*(?:--.*)?$",
-                                RegexOptions.Multiline | RegexOptions.IgnorePatternWhitespace | RegexOptions.IgnoreCase
-                            ).Where(s => !String.IsNullOrWhiteSpace(s));
-                                var b = o as BackgroundWorker;
-
-                                foreach (var statement in statements)
-                                {
-                                    connection.Execute(statement);
-                                }
-                                if (database.LastMessage != "")
-                                {
-                                    database.Status = DatabaseStatus.COMPLETEWITHMESSAGES;
-                                }
-                                else
-                                {
-                                    database.Status = DatabaseStatus.COMPLETE;
-                                }
-
+                            var b = o as BackgroundWorker;
+                            foreach (var statement in statements)
+                            {
+                                connection.Execute(statement);
+                            }
+                            if (database.LastMessage != "")
+                            {
+                                database.Status = DatabaseStatus.COMPLETEWITHMESSAGES;
+                            }
+                            else
+                            {
+                                database.Status = DatabaseStatus.COMPLETE;
+                            }
                         }
                         catch (Exception e)
                         {
@@ -188,8 +186,8 @@ namespace RPForEachDB
                         }
                     }
                 });
-                worker.RunWorkerAsync();
             }
+            worker.RunWorkerAsync();
         }
 
         private void OnOpenFileBtnClick(object sender, RoutedEventArgs e)
