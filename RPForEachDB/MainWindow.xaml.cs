@@ -19,6 +19,7 @@ using System.ComponentModel;
 using System.IO;
 using Microsoft.Win32;
 using System.Text.RegularExpressions;
+using RPForEachDB.Properties;
 
 namespace RPForEachDB
 {
@@ -46,7 +47,16 @@ namespace RPForEachDB
                 }
             }
         }
-        public bool Checked { get; set; }
+        public bool _checked;
+        public bool Checked { get => _checked; set
+            {
+                _checked = value;
+                if(_checked)
+                    Settings.Default.SelectedDatabases.Add(Name);
+                else
+                    Settings.Default.SelectedDatabases.Remove(Name);
+            }
+        }
         private string lastMessage;
         public string LastMessage
         {
@@ -116,6 +126,7 @@ namespace RPForEachDB
                 );
             }
             InitializeComponent();
+            SetSelectedDatabases(Databases);
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -124,12 +135,6 @@ namespace RPForEachDB
         {
             var item = (DatabaseGridItem)((DataGrid)sender).SelectedItem;
             CurrentItem = item;
-        }
-
-        private void OnChecked(object sender, RoutedEventArgs e)
-        {
-            var item = (DatabaseGridItem)((DataGridCell)sender).DataContext;
-            item.Checked = !item.Checked;
         }
 
         private void NotifiyPropertyChanged(string propertyName)
@@ -168,7 +173,7 @@ namespace RPForEachDB
                     };
                     try
                     {
-                        for (var i = 0; i < statements.Length - 1; i++)
+                        for (var i = 0; i < statements.Length; i++)
                         {
                             connection.Execute(statements[i]);
                             var percent = (float)i / statements.Length * 100;
@@ -192,6 +197,15 @@ namespace RPForEachDB
             });
         }
 
+        private void SetSelectedDatabases(IEnumerable<DatabaseGridItem> gridItems)
+        {
+            var databases = Settings.Default.SelectedDatabases.Cast<string>();
+            foreach(var db in gridItems)
+            {
+                db.Checked = databases.Contains(db.Name);
+            };
+        }
+
         private void OnOpenFileBtnClick(object sender, RoutedEventArgs e)
         {
             var openFileDialog = new OpenFileDialog
@@ -202,6 +216,11 @@ namespace RPForEachDB
             {
                 CurrentSQL = File.ReadAllText(openFileDialog.FileName);
             }
+        }
+
+        protected override void OnClosing(CancelEventArgs e)
+        {
+            Settings.Default.Save();
         }
     }
 }

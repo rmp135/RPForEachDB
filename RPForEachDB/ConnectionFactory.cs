@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Configuration;
+using RPForEachDB.Properties;
 
 namespace RPForEachDB
 {
@@ -12,7 +13,7 @@ namespace RPForEachDB
     {
         public SqlConnection Build()
         {
-            var connectionString = ConfigurationManager.AppSettings["ConnectionString"];
+            var connectionString = Settings.Default.ConnectionString;
             var connection = new SqlConnection(connectionString);
             if (connection.State == System.Data.ConnectionState.Closed)
                 connection.Open();
