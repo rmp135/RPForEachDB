@@ -33,8 +33,8 @@ namespace RPForEachDB
     public class DatabaseGridItem: INotifyPropertyChanged
     {
         public string Name { get; set; }
-        private DatabaseStatus status;
-        public DatabaseStatus Status
+        private string status;
+        public string Status
         {
             get => status;
             set
@@ -111,7 +111,7 @@ namespace RPForEachDB
                     names.Select(name => new DatabaseGridItem
                     {
                         Name = name,
-                        Status = DatabaseStatus.AVAILABLE
+                        Status = "Available"
                     })
                 );
             }
@@ -139,8 +139,6 @@ namespace RPForEachDB
 
         private void OnRunBtnClick(object buttonSender, RoutedEventArgs routedEventArgs)
         {
-            var worker = new BackgroundWorker();
-            worker.WorkerReportsProgress = true;
             var connectionFactory = new ConnectionFactory();
             var filteredDatabases = Databases.Where(d => d.Checked).ToList();
             var statements = Regex.Split(
@@ -150,44 +148,48 @@ namespace RPForEachDB
             ).Where(s => !String.IsNullOrWhiteSpace(s));
             foreach (var database in filteredDatabases)
             {
-                worker.DoWork += new DoWorkEventHandler(
-                delegate (object o, DoWorkEventArgs doWorkArgs)
+                RunScript(database, statements.ToArray());
+            }
+        }
+
+        private Task RunScript(DatabaseGridItem database, string[] statements)
+        {
+            return Task.Factory.StartNew(() =>
+            {
+                using (var connection = new ConnectionFactory().Build())
                 {
-                    using (var connection = connectionFactory.Build())
+                    database.Status = "Running...";
+                    database.LastMessage = "";
+                    connection.ChangeDatabase(database.Name);
+                    connection.InfoMessage += (object infoSender, SqlInfoMessageEventArgs args) =>
                     {
-                        database.LastMessage = "";
-                        connection.ChangeDatabase(database.Name);
-                        connection.InfoMessage += (object infoSender, SqlInfoMessageEventArgs args) =>
+                        database.LastMessage += "\n" + args.Message;
+                        PropertyChanged(this, new PropertyChangedEventArgs("CurrentMessage"));
+                    };
+                    try
+                    {
+                        for (var i = 0; i < statements.Length - 1; i++)
                         {
-                            database.LastMessage += "\n" + args.Message;
-                            PropertyChanged(this, new PropertyChangedEventArgs("CurrentMessage"));
-                        };
-                        try
-                        {
-                            database.Status = DatabaseStatus.RUNNING;
-                            var b = o as BackgroundWorker;
-                            foreach (var statement in statements)
-                            {
-                                connection.Execute(statement);
-                            }
-                            if (database.LastMessage != "")
-                            {
-                                database.Status = DatabaseStatus.COMPLETEWITHMESSAGES;
-                            }
-                            else
-                            {
-                                database.Status = DatabaseStatus.COMPLETE;
-                            }
+                            connection.Execute(statements[i]);
+                            var percent = (float)i / statements.Length * 100;
+                            database.Status = $"({percent.ToString("0.00")}%) Running...";
                         }
-                        catch (Exception e)
+                        if (database.LastMessage != "")
                         {
-                            database.Status = DatabaseStatus.ERROR;
-                            database.LastMessage = e.Message.ToString();
+                            database.Status = "Completed with messages";
+                        }
+                        else
+                        {
+                            database.Status = "Complete";
                         }
                     }
-                });
-            }
-            worker.RunWorkerAsync();
+                    catch (Exception e)
+                    {
+                        database.Status = "Error";
+                        database.LastMessage = e.Message.ToString();
+                    }
+                }
+            });
         }
 
         private void OnOpenFileBtnClick(object sender, RoutedEventArgs e)
