@@ -18,14 +18,23 @@ using System.Data.SqlClient;
 using System.ComponentModel;
 using System.IO;
 using Microsoft.Win32;
+using System.Text.RegularExpressions;
 
 namespace RPForEachDB
 {
+    public enum DatabaseStatus {
+        AVAILABLE,
+        RUNNING,
+        COMPLETE,
+        COMPLETEWITHMESSAGES,
+        ERROR
+    }
+
     public class DatabaseGridItem: INotifyPropertyChanged
     {
         public string Name { get; set; }
-        private string status;
-        public string Status
+        private DatabaseStatus status;
+        public DatabaseStatus Status
         {
             get => status;
             set
@@ -102,7 +111,7 @@ namespace RPForEachDB
                     names.Select(name => new DatabaseGridItem
                     {
                         Name = name,
-                        Status = "AVAILABLE"
+                        Status = DatabaseStatus.AVAILABLE
                     })
                 );
             }
@@ -130,38 +139,56 @@ namespace RPForEachDB
 
         private void OnRunBtnClick(object buttonSender, RoutedEventArgs routedEventArgs)
         {
+            var worker = new BackgroundWorker();
+            worker.WorkerReportsProgress = true;
             var connectionFactory = new ConnectionFactory();
             var filteredDatabases = Databases.Where(d => d.Checked).ToList();
             foreach (var database in filteredDatabases)
             {
-                using (var connection = connectionFactory.Build())
+                worker.DoWork += new DoWorkEventHandler(
+                delegate (object o, DoWorkEventArgs doWorkArgs)
                 {
-                    database.LastMessage = "";
-                    connection.ChangeDatabase(database.Name);
-                    connection.InfoMessage += (object infoSender, SqlInfoMessageEventArgs args) =>
+                    using (var connection = connectionFactory.Build())
                     {
-                        database.LastMessage += args.Message;
-                        PropertyChanged(this, new PropertyChangedEventArgs("CurrentMessage"));
-                    };
-                    try
-                    {
-                        database.Status = "Running";
-                        connection.Execute(CurrentSQL);
-                        if (database.LastMessage != "")
+                        database.LastMessage = "";
+                        connection.ChangeDatabase(database.Name);
+                        connection.InfoMessage += (object infoSender, SqlInfoMessageEventArgs args) =>
                         {
-                            database.Status = "Complete with messages.";
+                            database.LastMessage += "\n" + args.Message;
+                            PropertyChanged(this, new PropertyChangedEventArgs("CurrentMessage"));
+                        };
+                        try
+                        {
+                            database.Status = DatabaseStatus.RUNNING;
+                            var statements = Regex.Split(
+                                CurrentSQL,
+                                @"^[\t\r\n]*GO[\t\r\n]*\d*[\t\r\n]*(?:--.*)?$",
+                                RegexOptions.Multiline | RegexOptions.IgnorePatternWhitespace | RegexOptions.IgnoreCase
+                            ).Where(s => !String.IsNullOrWhiteSpace(s));
+                                var b = o as BackgroundWorker;
+
+                                foreach (var statement in statements)
+                                {
+                                    connection.Execute(statement);
+                                }
+                                if (database.LastMessage != "")
+                                {
+                                    database.Status = DatabaseStatus.COMPLETEWITHMESSAGES;
+                                }
+                                else
+                                {
+                                    database.Status = DatabaseStatus.COMPLETE;
+                                }
+
                         }
-                        else
+                        catch (Exception e)
                         {
-                            database.Status = "Complete";
+                            database.Status = DatabaseStatus.ERROR;
+                            database.LastMessage = e.Message.ToString();
                         }
                     }
-                    catch (Exception e)
-                    {
-                        database.Status = "Error";
-                        database.LastMessage = e.Message.ToString();
-                    }
-                }
+                });
+                worker.RunWorkerAsync();
             }
         }
 
