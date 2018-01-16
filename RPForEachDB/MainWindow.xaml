@@ -6,33 +6,54 @@
         xmlns:local="clr-namespace:RPForEachDB"
         mc:Ignorable="d"
         Title="RPForEachDB" Height="600" Width="800">
-    <DockPanel Height="auto" VerticalAlignment="Stretch">
-        <DockPanel DockPanel.Dock="Right" VerticalAlignment="Stretch" Height="auto" Width="auto" HorizontalAlignment="Stretch">
-            <DockPanel>
-                <Button DockPanel.Dock="Top" Click="OnRunBtnClick" Content="Run"/>
-                <DataGrid DockPanel.Dock="Bottom" CanUserAddRows="False" SelectionChanged="DataGrid_SelectionChanged" MaxWidth="400" HorizontalAlignment="Stretch" ColumnWidth="*" AutoGenerateColumns="False" ItemsSource="{Binding Databases}">
-                    <DataGrid.Columns>
-                        <DataGridTextColumn IsReadOnly="True" Header="Name" Binding="{Binding Name}" />
-                        <DataGridTextColumn IsReadOnly="True" Header="Status" Binding="{Binding Status}" />
-                        <DataGridTemplateColumn Header="Run" Width="auto">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <CheckBox IsChecked="{Binding Path=Checked, UpdateSourceTrigger=PropertyChanged}"></CheckBox>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                    </DataGrid.Columns>
-                </DataGrid>
-            </DockPanel>
-            <DockPanel>
-                <Button DockPanel.Dock="Top" Content="Load File" VerticalAlignment="Top" Width="auto" Click="OnOpenFileBtnClick"/>
-                <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="100" MinHeight="100" Width="auto" DockPanel.Dock="Bottom" >
-                    <TextBox IsReadOnly="True" TextWrapping="Wrap" Text="{Binding CurrentItem.LastMessage}" Height="auto"/>
-                </ScrollViewer>
-                <ScrollViewer VerticalScrollBarVisibility="Auto" DockPanel.Dock="Top" >
-                    <TextBox AcceptsReturn="True" AcceptsTab="True" IsReadOnly="False" TextWrapping="Wrap" Text="{Binding CurrentSQL}" Height="auto" />
-                </ScrollViewer>
-            </DockPanel>
-        </DockPanel>
-    </DockPanel>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"></ColumnDefinition>
+            <ColumnDefinition Width="auto"></ColumnDefinition>
+            <ColumnDefinition Width="*"></ColumnDefinition>
+        </Grid.ColumnDefinitions>
+        <Grid Grid.Column="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="auto"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+            </Grid.RowDefinitions>
+            <Button Grid.Row="0" Click="OnRunBtnClick" Content="Run"/>
+            <DataGrid Grid.Row="1"  CanUserAddRows="False" SelectionChanged="DataGrid_SelectionChanged" HorizontalAlignment="Stretch" ColumnWidth="*" AutoGenerateColumns="False" ItemsSource="{Binding Databases}">
+                <DataGrid.Columns>
+                    <DataGridTextColumn IsReadOnly="True" Header="Name" Binding="{Binding Name}" />
+                    <DataGridTextColumn IsReadOnly="True" Header="Status" Binding="{Binding Status}" />
+                    <DataGridTemplateColumn Header="Run" Width="auto">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <CheckBox IsChecked="{Binding Path=Checked, UpdateSourceTrigger=PropertyChanged}"></CheckBox>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Grid>
+        <GridSplitter Grid.Column="1"
+                    Width="2" Background="Gray" 
+                    VerticalAlignment="Stretch" 
+                    HorizontalAlignment="Center" />
+        <Grid Grid.Column="2">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="auto"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="auto"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+            </Grid.RowDefinitions>
+            <Button Grid.Row="0" Grid.Column="0" Content="Load File" VerticalAlignment="Top" Width="auto" Click="OnOpenFileBtnClick"/>
+            <ScrollViewer Grid.Row="1" Grid.Column="0" VerticalScrollBarVisibility="Auto" DockPanel.Dock="Top" >
+                <TextBox AcceptsReturn="True" AcceptsTab="True" IsReadOnly="False" TextWrapping="Wrap" Text="{Binding CurrentSQL}" Height="auto" />
+            </ScrollViewer>
+            <GridSplitter Grid.Row="2" Grid.Column="0"
+                    Height="2" Background="Gray" 
+                    VerticalAlignment="Center" 
+                    HorizontalAlignment="Stretch" />
+            <ScrollViewer Grid.Row="3" Grid.Column="0" VerticalScrollBarVisibility="Auto" Width="auto" DockPanel.Dock="Bottom" >
+                <TextBox IsReadOnly="True" TextWrapping="Wrap" Text="{Binding CurrentItem.LastMessage}" Height="auto"/>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
 </Window>
