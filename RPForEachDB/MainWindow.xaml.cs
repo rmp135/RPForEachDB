@@ -118,7 +118,7 @@ namespace RPForEachDB
             InitializeComponent();
         }
 
-        private void OnGetDatabsesBtnClick(object sender, RoutedEventArgs args)
+        private void OnGetDatabasesBtnClick(object sender, RoutedEventArgs args)
         {
             PopulateDatabases();
         }
