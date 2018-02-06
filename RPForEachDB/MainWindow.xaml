@@ -17,6 +17,7 @@
                 <ColumnDefinition Width="auto"></ColumnDefinition>
             </Grid.ColumnDefinitions>
             <TextBox Grid.Column="0" Margin="0,0,5,0" Text="{Binding ConnectionString}"></TextBox>
+            <Button Grid.Column="1" Content="Get Databases" VerticalAlignment="Top" Click="OnGetDatabasesBtnClick"/>
         </Grid>
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
