@@ -112,6 +112,7 @@ namespace RPForEachDB
         }
         public MainWindow()
         {
+            Settings.Default.Upgrade();
             Databases = new ObservableCollection<DatabaseGridItem>();
             PopulateDatabases();
             DataContext = this;
