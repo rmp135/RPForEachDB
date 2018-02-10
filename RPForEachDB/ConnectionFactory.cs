@@ -6,17 +6,28 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Configuration;
 using RPForEachDB.Properties;
+using System.Security;
 
 namespace RPForEachDB
 {
     public class ConnectionFactory
     {
-        public SqlConnection Build()
+        public SqlConnection Build(IServerModel serverModel)
         {
-            var connectionString = Settings.Default.ConnectionString;
-            var connection = new SqlConnection($"Data Source={connectionString};Trusted_Connection=True");
+            var connectionStringBuilder = new SqlConnectionStringBuilder
+            {
+                ConnectTimeout = 3,
+                DataSource = serverModel.Server,
+                IntegratedSecurity = serverModel.AuthenticationMode == AuthenticationMode.Windows,
+                UserID = serverModel.Username,
+                Password = serverModel.Password
+            };
+            SqlConnection connection;
+            connection = new SqlConnection(connectionStringBuilder.ToString());
             if (connection.State == System.Data.ConnectionState.Closed)
+            {
                 connection.Open();
+            }
             return connection;
         }
     }

@@ -1,19 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using Dapper;
+//using Dapper;
 using System.Data.SqlClient;
 using System.ComponentModel;
 using System.IO;
@@ -23,67 +14,22 @@ using RPForEachDB.Properties;
 
 namespace RPForEachDB
 {
-    public class DatabaseGridItem: INotifyPropertyChanged
-    {
-        public string Name { get; set; }
-        private string status;
-        public string Status
-        {
-            get => status;
-            set
-            {
-                if (status != value)
-                {
-                    status = value;
-                    NotifiyPropertyChanged("Status");
-                }
-            }
-        }
-        public bool _checked;
-        public bool Checked { get => _checked; set
-            {
-                _checked = value;
-                if(_checked)
-                    Settings.Default.SelectedDatabases.Add(Name);
-                else
-                    Settings.Default.SelectedDatabases.Remove(Name);
-            }
-        }
-        private string lastMessage;
-        public string LastMessage
-        {
-            get => lastMessage;
-            set
-            {
-                if (lastMessage != value)
-                {
-                    lastMessage = value;
-                    NotifiyPropertyChanged("LastMessage");
-                }
-            }
-        }
-
-        public void NotifiyPropertyChanged(string propertyName)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-
-        public event PropertyChangedEventHandler PropertyChanged;
-    }
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
-        public string ConnectionString
+        private readonly StateManager _appState;
+        public ObservableCollection<DatabaseGridItem> Databases { get; set; }
+        public ObservableCollection<IServerModel> Servers { get; set; }
+        private IServerModel _currentServer { get; set; }
+        private readonly SQLTasks _sqlTasks;
+        public IServerModel CurrentServer
         {
-            get => Settings.Default.ConnectionString;
+            get => _currentServer;
             set
             {
-                Settings.Default.ConnectionString = value;
+                _currentServer = value;
+                NotifyPropertyChanged("CurrentServer");
             }
         }
-        public ObservableCollection<DatabaseGridItem> Databases { get; set; }
         private DatabaseGridItem _currentItem;
         public DatabaseGridItem CurrentItem
         {
@@ -93,11 +39,11 @@ namespace RPForEachDB
                 if (_currentItem != value)
                 {
                     _currentItem = value;
-                    NotifiyPropertyChanged("CurrentItem");
+                    NotifyPropertyChanged("CurrentItem");
                 }
             }
         }
-        public string _currentSQL;
+        private string _currentSQL = "";
         public string CurrentSQL
         {
             get => _currentSQL;
@@ -106,38 +52,52 @@ namespace RPForEachDB
                 if (_currentSQL != value)
                 {
                     _currentSQL = value;
-                    NotifiyPropertyChanged("CurrentSQL");
+                    NotifyPropertyChanged("CurrentSQL");
                 }
             }
         }
+        private bool _isGetDatabaseEnabled;
+        public bool IsGetDatabaseEnabled
+        {
+            get => _isGetDatabaseEnabled;
+            set
+            {
+                _isGetDatabaseEnabled = value;
+                NotifyPropertyChanged("IsGetDatabaseEnabled");
+            }
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        private void NotifyPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
         public MainWindow()
         {
-            Settings.Default.Upgrade();
+            _sqlTasks = new SQLTasks();
+            _appState = new StateManager();
+            Servers = new ObservableCollection<IServerModel>(_appState.Servers);
             Databases = new ObservableCollection<DatabaseGridItem>();
-            PopulateDatabases();
             DataContext = this;
             InitializeComponent();
+            IsGetDatabaseEnabled = CurrentServer != null;
         }
 
         private void OnGetDatabasesBtnClick(object sender, RoutedEventArgs args)
         {
-            PopulateDatabases();
-        }
-
-        private void PopulateDatabases()
-        {
             Databases.Clear();
             try
             {
-                using (var connection = new ConnectionFactory().Build())
+                using (var connection = new ConnectionFactory().Build(CurrentServer))
                 {
-                    var names = connection.Query<string>("SELECT Name FROM master.dbo.sysdatabases WHERE DATABASEPROPERTYEX(Name, 'Status') = 'ONLINE'");
+                    var names = _sqlTasks.GetAllDatabases(connection);
                     foreach(var name in names)
                     {
                         Databases.Add(new DatabaseGridItem { Name = name, Status = "Available" });
                     }
                 }
-                SetSelectedDatabases();
             }
             catch (Exception)
             {
@@ -145,17 +105,10 @@ namespace RPForEachDB
             }
         }
 
-        public event PropertyChangedEventHandler PropertyChanged;
-
         private void DataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             var item = (DatabaseGridItem)((DataGrid)sender).SelectedItem;
             CurrentItem = item;
-        }
-
-        private void NotifiyPropertyChanged(string propertyName)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
         private void OnRunBtnClick(object buttonSender, RoutedEventArgs routedEventArgs)
@@ -177,31 +130,32 @@ namespace RPForEachDB
         {
             return Task.Factory.StartNew(() =>
             {
-                using (var connection = new ConnectionFactory().Build())
+                using (var connection = new ConnectionFactory().Build(CurrentServer))
                 {
                     database.Status = "Running...";
                     database.LastMessage = "";
-                    connection.ChangeDatabase(database.Name);
                     connection.InfoMessage += (object infoSender, SqlInfoMessageEventArgs args) =>
                     {
-                        database.LastMessage += "\n" + args.Message;
+                        if (args.Message.Contains("Changed database context to ")) return; // Prevents unnecessary message when changing database.
+                        database.LastMessage += (database.LastMessage == "" ? "" : "\n") + args.Message;
                         PropertyChanged(this, new PropertyChangedEventArgs("CurrentMessage"));
                     };
                     try
                     {
+                        connection.ChangeDatabase(database.Name);
                         for (var i = 0; i < statements.Length; i++)
                         {
-                            connection.Execute(statements[i]);
+                            _sqlTasks.Execute(connection, statements[i]);
                             var percent = (float)i / statements.Length * 100;
                             database.Status = $"({percent.ToString("0.00")}%) Running...";
                         }
-                        if (database.LastMessage != "")
+                        if (database.LastMessage == "")
                         {
-                            database.Status = "Completed with messages";
+                            database.Status = "Complete";
                         }
                         else
                         {
-                            database.Status = "Complete";
+                            database.Status = "Completed with messages";
                         }
                     }
                     catch (Exception e)
@@ -211,15 +165,6 @@ namespace RPForEachDB
                     }
                 }
             });
-        }
-
-        private void SetSelectedDatabases()
-        {
-            var databases = Settings.Default.SelectedDatabases.Cast<string>();
-            foreach(var db in Databases)
-            {
-                db.Checked = databases.Contains(db.Name);
-            };
         }
 
         private void OnOpenFileBtnClick(object sender, RoutedEventArgs e)
@@ -236,7 +181,26 @@ namespace RPForEachDB
 
         protected override void OnClosing(CancelEventArgs e)
         {
-            Settings.Default.Save();
+            _appState.Save();
+        }
+
+        private void OnManageServersBtnClick(object sender, RoutedEventArgs e)
+        {
+            new ConnectionManager(_appState)
+            {
+                Owner = this
+            }.ShowDialog();
+            var current = CurrentServer;
+            Servers.Clear();
+            foreach (var item in _appState.Servers) Servers.Add(item);
+            if (Servers.Contains(current))
+                CurrentServer = current;
+        }
+
+        private void ServerComboOnChange(object sender, SelectionChangedEventArgs e)
+        {
+            IsGetDatabaseEnabled = CurrentServer != null;
+            Databases.Clear();
         }
     }
 }
