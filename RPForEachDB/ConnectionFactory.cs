@@ -16,7 +16,7 @@ namespace RPForEachDB
         {
             var connectionStringBuilder = new SqlConnectionStringBuilder
             {
-                ConnectTimeout = 3,
+                ConnectTimeout = 5,
                 DataSource = serverModel.Server,
                 IntegratedSecurity = serverModel.AuthenticationMode == AuthenticationMode.Windows,
                 UserID = serverModel.Username,
