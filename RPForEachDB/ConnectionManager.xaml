@@ -13,20 +13,19 @@
         </Grid.ColumnDefinitions>
         <ListBox Grid.Column="0" HorizontalAlignment="Left" ScrollViewer.HorizontalScrollBarVisibility="Hidden" BorderThickness="0" VerticalAlignment="Top" Width="100" Height="230" ItemsSource="{Binding Servers}" DisplayMemberPath="Name" SelectedValue="{Binding CurrentModel}" SelectedIndex="{Binding CurrentModelIndex, Mode=OneWay}" />
         <Label Content="Server" Grid.Column="1" HorizontalAlignment="Left" Margin="10,47,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.547,0.615"/>
-        <TextBox Grid.Column="1" HorizontalAlignment="Left" Height="23" Margin="85,19,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="199" Text="{Binding CurrentModel.Name, UpdateSourceTrigger=PropertyChanged}"/>
-        <TextBox Grid.Column="1" HorizontalAlignment="Left" Height="23" Margin="85,50,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="199" Text="{Binding CurrentModel.Server, UpdateSourceTrigger=PropertyChanged}"/>
+        <TextBox Grid.Column="1" Height="23" Margin="85,19,10,0" TextWrapping="Wrap" VerticalAlignment="Top" Text="{Binding CurrentModel.Name, UpdateSourceTrigger=PropertyChanged}"/>
+        <TextBox Grid.Column="1" Height="23" Margin="85,50,10,0" TextWrapping="Wrap" VerticalAlignment="Top" Text="{Binding CurrentModel.Server, UpdateSourceTrigger=PropertyChanged}"/>
         <RadioButton GroupName="SecurityMode" IsChecked="{Binding IsWindowsAuthentication, Mode=TwoWay}" Content="Windows" Grid.Column="1" HorizontalAlignment="Left" Margin="85,110,0,0" VerticalAlignment="Top" Checked="OnSecurityModeRadioClick"/>
         <RadioButton Name="SQLAuthenticationRadio" GroupName="SecurityMode" IsChecked="{Binding IsSQLAuthentication, Mode=TwoWay}" Content="SQL Server" Grid.Column="1" HorizontalAlignment="Left" Margin="85,130,0,0" VerticalAlignment="Top" Checked="OnSecurityModeRadioClick"/>
         <Grid Name="CredentialsGrid" Grid.Column="1" Margin="10,150,10,35">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="22*"/>
                 <ColumnDefinition Width="115*"/>
             </Grid.ColumnDefinitions>
-            <TextBox HorizontalAlignment="Left" Height="23" Margin="31,5,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="199" Grid.Column="1" Text="{Binding CurrentModel.Username, UpdateSourceTrigger=PropertyChanged}"/>
-            <TextBox Name="PasswordField" HorizontalAlignment="Left" Height="23" Margin="31,31,0,0" VerticalAlignment="Top" Width="199" Grid.Column="1" Text="{Binding CurrentModel.Password, UpdateSourceTrigger=PropertyChanged}"/>
+            <TextBox Height="23" Margin="68,5,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Text="{Binding CurrentModel.Username, UpdateSourceTrigger=PropertyChanged}"/>
+            <TextBox Name="PasswordField" Height="23" Margin="68,31,0,0" VerticalAlignment="Top" Text="{Binding CurrentModel.Password, UpdateSourceTrigger=PropertyChanged}"/>
             <Label Content="Username" HorizontalAlignment="Left" VerticalAlignment="Top" Grid.ColumnSpan="2"/>
             <Label Content="Password" HorizontalAlignment="Left" Margin="0,28,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.517,1.559" Width="63" Grid.ColumnSpan="2"/>
-            <Label Content="Passwords are stored in plain text." TextElement.Foreground="Red" Grid.Column="1" HorizontalAlignment="Left" Margin="31,54,0,0" VerticalAlignment="Top"/>
+            <Label Content="Passwords are stored in plain text." TextElement.Foreground="Red" Margin="41,54,0,0" HorizontalContentAlignment="Right" Height="26" VerticalAlignment="Top"/>
         </Grid>
         <Label Content="Name" Grid.Column="1" HorizontalAlignment="Left" Margin="10,16,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.547,0.615"/>
         <Button IsEnabled="{Binding IsDeleteEnabled}" Content="Delete" HorizontalAlignment="Left" Margin="85,236,0,0" Width="80" Grid.Column="1" RenderTransformOrigin="0.468,1.348" Click="OnDeleteBtnClick" Height="20" VerticalAlignment="Top"/>
