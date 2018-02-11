@@ -1,6 +1,6 @@
 # RPForEachDB
 
-Windows tool for running SQL scripts over multiple databases of an Microsoft SQL Server.
+Windows tool for running SQL scripts over multiple databases of a Microsoft SQL Server.
 
 ## Usage
 
