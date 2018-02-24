@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-//using Dapper;
 using System.Data.SqlClient;
 using System.ComponentModel;
 using System.IO;
@@ -16,7 +15,7 @@ namespace RPForEachDB
 {
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
-        private readonly StateManager _appState;
+        private readonly IAppState _appState;
         public ObservableCollection<DatabaseGridItem> Databases { get; set; }
         public ObservableCollection<IServerModel> Servers { get; set; }
         private IServerModel _currentServer { get; set; }
@@ -76,8 +75,8 @@ namespace RPForEachDB
 
         public MainWindow()
         {
-            _sqlTasks = new SQLTasks();
-            _appState = new StateManager();
+            _appState = new AppState();
+            _sqlTasks = new SQLTasks(_appState);
             Servers = new ObservableCollection<IServerModel>(_appState.Servers);
             Databases = new ObservableCollection<DatabaseGridItem>();
             DataContext = this;
@@ -186,7 +185,7 @@ namespace RPForEachDB
 
         private void OnManageServersBtnClick(object sender, RoutedEventArgs e)
         {
-            new ConnectionManager(_appState)
+            new SettingsWindow(_appState)
             {
                 Owner = this
             }.ShowDialog();

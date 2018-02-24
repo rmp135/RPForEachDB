@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Security;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -17,9 +19,9 @@ using System.Windows.Shapes;
 
 namespace RPForEachDB
 {
-    public partial class ConnectionManager : Window, INotifyPropertyChanged
+    public partial class SettingsWindow : Window, INotifyPropertyChanged
     {
-        private readonly StateManager appState;
+        private readonly IAppState appState;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -55,12 +57,22 @@ namespace RPForEachDB
             }
         }
 
+        public int CommandTimeout
+        {
+            get => appState.CommandTimeout;
+            set
+            {
+                appState.CommandTimeout = value;
+                NotifyPropertyChanged("CommandTimeout");
+            }
+        }
+
         public int CurrentModelIndex
         {
             get => Servers.IndexOf(CurrentModel);
         }
 
-        public ConnectionManager(StateManager appState)
+        public SettingsWindow(IAppState appState)
         {
             this.appState = appState;
             Servers = new ObservableCollection<IServerModel>(appState.Servers);
@@ -146,6 +158,23 @@ namespace RPForEachDB
         {
             base.OnClosed(e);
             appState.Save();
+        }
+
+        private void TextBox_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            e.Handled = !int.TryParse(e.Text, out var result);
+        }
+
+        private void TextBox_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            e.Handled = e.Key == Key.Space;
+        }
+
+        private void TextBox_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            var source = (TextBox)sender;
+            var newValue = int.Parse(source.Text) + (e.Delta < 0 ? -1 : 1);
+            source.Text = Math.Max(newValue, 0).ToString();
         }
     }
 }

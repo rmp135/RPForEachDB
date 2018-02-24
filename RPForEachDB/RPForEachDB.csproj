@@ -74,8 +74,8 @@
     <Compile Include="ServerModel.cs" />
     <Compile Include="Settings.cs" />
     <Compile Include="SQLTasks.cs" />
-    <Compile Include="StateManager.cs" />
-    <Page Include="ConnectionManager.xaml">
+    <Compile Include="AppState.cs" />
+    <Page Include="SettingsWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -88,8 +88,8 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="ConnectionFactory.cs" />
-    <Compile Include="ConnectionManager.xaml.cs">
-      <DependentUpon>ConnectionManager.xaml</DependentUpon>
+    <Compile Include="SettingsWindow.xaml.cs">
+      <DependentUpon>SettingsWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="DatabaseGridItem.cs" />
     <Compile Include="MainWindow.xaml.cs">
