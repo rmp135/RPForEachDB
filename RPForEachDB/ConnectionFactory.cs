@@ -12,7 +12,7 @@ namespace RPForEachDB
 {
     public class ConnectionFactory
     {
-        public SqlConnection Build(IServerModel serverModel)
+        public SqlConnection Build(ServerModel serverModel)
         {
             var connectionStringBuilder = new SqlConnectionStringBuilder
             {

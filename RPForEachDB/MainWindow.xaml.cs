@@ -13,88 +13,34 @@ using RPForEachDB.Properties;
 
 namespace RPForEachDB
 {
-    public partial class MainWindow : Window, INotifyPropertyChanged
+    public partial class MainWindow : Window
     {
         private readonly IAppState _appState;
-        public ObservableCollection<DatabaseGridItem> Databases { get; set; }
-        public ObservableCollection<IServerModel> Servers { get; set; }
-        private IServerModel _currentServer { get; set; }
         private readonly SQLTasks _sqlTasks;
-        public IServerModel CurrentServer
-        {
-            get => _currentServer;
-            set
-            {
-                _currentServer = value;
-                NotifyPropertyChanged("CurrentServer");
-            }
-        }
-        private DatabaseGridItem _currentItem;
-        public DatabaseGridItem CurrentItem
-        {
-            get => _currentItem;
-            set
-            {
-                if (_currentItem != value)
-                {
-                    _currentItem = value;
-                    NotifyPropertyChanged("CurrentItem");
-                }
-            }
-        }
-        private string _currentSQL = "";
-        public string CurrentSQL
-        {
-            get => _currentSQL;
-            set
-            {
-                if (_currentSQL != value)
-                {
-                    _currentSQL = value;
-                    NotifyPropertyChanged("CurrentSQL");
-                }
-            }
-        }
-        private bool _isGetDatabaseEnabled;
-        public bool IsGetDatabaseEnabled
-        {
-            get => _isGetDatabaseEnabled;
-            set
-            {
-                _isGetDatabaseEnabled = value;
-                NotifyPropertyChanged("IsGetDatabaseEnabled");
-            }
-        }
 
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        private void NotifyPropertyChanged(string propertyName)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
+        private MainWindowViewModel ViewModel => (MainWindowViewModel)DataContext;
 
         public MainWindow()
         {
             _appState = new AppState();
             _sqlTasks = new SQLTasks(_appState);
-            Servers = new ObservableCollection<IServerModel>(_appState.Servers);
-            Databases = new ObservableCollection<DatabaseGridItem>();
-            DataContext = this;
+            DataContext = new MainWindowViewModel();
+            ViewModel.Servers = new ObservableCollection<ServerModel>(_appState.Servers);
+            ViewModel.Databases = new ObservableCollection<DatabaseGridItem>();
             InitializeComponent();
-            IsGetDatabaseEnabled = CurrentServer != null;
         }
 
         private void OnGetDatabasesBtnClick(object sender, RoutedEventArgs args)
         {
-            Databases.Clear();
+            ViewModel.Databases.Clear();
             try
             {
-                using (var connection = new ConnectionFactory().Build(CurrentServer))
+                using (var connection = new ConnectionFactory().Build(ViewModel.CurrentServer))
                 {
                     var names = _sqlTasks.GetAllDatabases(connection);
-                    foreach(var name in names)
+                    foreach(var name in names.OrderBy(n => n.ToLower()))
                     {
-                        Databases.Add(new DatabaseGridItem { Name = name, Status = "Available" });
+                        ViewModel.Databases.Add(new DatabaseGridItem { Name = name, Status = "Available", Checked = ViewModel.CurrentServer.SelectedDatabases.Contains(name) });
                     }
                 }
             }
@@ -107,15 +53,15 @@ namespace RPForEachDB
         private void DataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             var item = (DatabaseGridItem)((DataGrid)sender).SelectedItem;
-            CurrentItem = item;
+            ViewModel.CurrentItem = item;
         }
 
         private void OnRunBtnClick(object buttonSender, RoutedEventArgs routedEventArgs)
         {
             var connectionFactory = new ConnectionFactory();
-            var filteredDatabases = Databases.Where(d => d.Checked).ToList();
+            var filteredDatabases = ViewModel.Databases.Where(d => d.Checked).ToList();
             var statements = Regex.Split(
-                CurrentSQL,
+                ViewModel.CurrentSQL,
                 @"^[\t\r\n]*GO[\t\r\n]*\d*[\t\r\n]*(?:--.*)?$",
                 RegexOptions.Multiline | RegexOptions.IgnorePatternWhitespace | RegexOptions.IgnoreCase
             ).Where(s => !String.IsNullOrWhiteSpace(s));
@@ -127,9 +73,10 @@ namespace RPForEachDB
 
         private Task RunScript(DatabaseGridItem database, string[] statements)
         {
-            return Task.Factory.StartNew(() =>
+            var viewModel = ViewModel;
+            return Task.Run(() =>
             {
-                using (var connection = new ConnectionFactory().Build(CurrentServer))
+                using (var connection = new ConnectionFactory().Build(viewModel.CurrentServer))
                 {
                     database.Status = "Running...";
                     database.LastMessage = "";
@@ -137,7 +84,6 @@ namespace RPForEachDB
                     {
                         if (args.Message.Contains("Changed database context to ")) return; // Prevents unnecessary message when changing database.
                         database.LastMessage += (database.LastMessage == "" ? "" : "\n") + args.Message;
-                        PropertyChanged(this, new PropertyChangedEventArgs("CurrentMessage"));
                     };
                     try
                     {
@@ -174,7 +120,7 @@ namespace RPForEachDB
             };
             if (openFileDialog.ShowDialog() == true)
             {
-                CurrentSQL = File.ReadAllText(openFileDialog.FileName);
+                ViewModel.CurrentSQL = File.ReadAllText(openFileDialog.FileName);
             }
         }
 
@@ -189,17 +135,33 @@ namespace RPForEachDB
             {
                 Owner = this
             }.ShowDialog();
-            var current = CurrentServer;
-            Servers.Clear();
-            foreach (var item in _appState.Servers) Servers.Add(item);
-            if (Servers.Contains(current))
-                CurrentServer = current;
+            var current = ViewModel.CurrentServer;
+            ViewModel.Servers.Clear();
+            foreach (var item in _appState.Servers) ViewModel.Servers.Add(item);
+            if (ViewModel.Servers.Contains(current))
+                ViewModel.CurrentServer = current;
         }
 
         private void ServerComboOnChange(object sender, SelectionChangedEventArgs e)
         {
-            IsGetDatabaseEnabled = CurrentServer != null;
-            Databases.Clear();
+            ViewModel.Databases.Clear();
         }
+
+        private void CheckBox_Click(object sender, RoutedEventArgs e)
+        {
+            ViewModel.CurrentServer.SelectedDatabases = ViewModel.Databases.Where(d => d.Checked).Select(d => d.Name).ToArray();
+        }
+    }
+
+    public class MainWindowViewModel : INotifyPropertyChanged
+    {
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        public ObservableCollection<DatabaseGridItem> Databases { get; set; }
+        public ObservableCollection<ServerModel> Servers { get; set; }
+        public ServerModel CurrentServer { get; set; }
+        public DatabaseGridItem CurrentItem { get; set; }
+        public string CurrentSQL { get; set; } = "";
+        public bool IsGetDatabaseEnabled { get => CurrentServer != null; }
     }
 }

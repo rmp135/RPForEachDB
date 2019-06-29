@@ -9,13 +9,13 @@ namespace RPForEachDB
 {
     public interface IAppState
     {
-        IEnumerable<IServerModel> Servers { get; set; }
+        IEnumerable<ServerModel> Servers { get; set; }
         int CommandTimeout { get; set; }
         void Save();
     }
     public class AppState: IAppState
     {
-        public IEnumerable<IServerModel> Servers { get; set; }
+        public IEnumerable<ServerModel> Servers { get; set; }
         public int CommandTimeout
         {
             get => Settings.Default.CommandTimeout;
@@ -24,7 +24,7 @@ namespace RPForEachDB
 
         public AppState()
         {
-            Servers = Settings.Default.Servers ?? new IServerModel[0];
+            Servers = Settings.Default.Servers ?? new ServerModel[0];
         }
 
         public void Save()

@@ -10,11 +10,6 @@ namespace RPForEachDB
 {
     public class DatabaseGridItem : INotifyPropertyChanged
     {
-        public void NotifyPropertyChanged(string propertyName)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-
         public event PropertyChangedEventHandler PropertyChanged;
 
         public string Name { get; set; }
@@ -27,7 +22,6 @@ namespace RPForEachDB
                 if (status != value)
                 {
                     status = value;
-                    NotifyPropertyChanged("Status");
                 }
             }
         }
@@ -41,7 +35,6 @@ namespace RPForEachDB
                 if (lastMessage != value)
                 {
                     lastMessage = value;
-                    NotifyPropertyChanged("LastMessage");
                 }
             }
         }
