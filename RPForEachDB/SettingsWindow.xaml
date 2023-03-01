@@ -3,7 +3,6 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:RPForEachDB"
         mc:Ignorable="d"
         Title="Settings" Height="330" Width="400" ResizeMode="NoResize" WindowStartupLocation="CenterOwner">
     <Grid>
@@ -17,7 +16,7 @@
                         <ColumnDefinition Width="auto"></ColumnDefinition>
                         <ColumnDefinition Width="*"></ColumnDefinition>
                     </Grid.ColumnDefinitions>
-                    <ListBox Grid.Column="0" HorizontalAlignment="Left" ScrollViewer.HorizontalScrollBarVisibility="Hidden" BorderThickness="0" VerticalAlignment="Top" Width="100" Height="230" ItemsSource="{Binding Servers}" DisplayMemberPath="Name" SelectedValue="{Binding CurrentModel}" SelectedIndex="{Binding CurrentModelIndex, Mode=OneWay}" />
+                    <ListBox Grid.Column="0" HorizontalAlignment="Left" ScrollViewer.HorizontalScrollBarVisibility="Hidden" BorderThickness="0" VerticalAlignment="Top" Width="100" Height="230" ItemsSource="{Binding Servers}" DisplayMemberPath="Name" SelectedValue="{Binding CurrentModel}" SelectedIndex="{Binding CurrentModelIndex, Mode=OneWay}" d:ItemsSource="{d:SampleData ItemCount=5}" />
                     <Label Content="Server" Grid.Column="1" HorizontalAlignment="Left" Margin="10,47,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.547,0.615"/>
                     <TextBox Grid.Column="1" Height="23" Margin="85,19,10,0" TextWrapping="Wrap" VerticalAlignment="Top" Text="{Binding CurrentModel.Name, UpdateSourceTrigger=PropertyChanged}"/>
                     <TextBox Grid.Column="1" Height="23" Margin="85,50,10,0" TextWrapping="Wrap" VerticalAlignment="Top" Text="{Binding CurrentModel.Server, UpdateSourceTrigger=PropertyChanged}"/>
@@ -43,9 +42,24 @@
             </TabItem>
             <TabItem Header="Global">
                 <Grid>
-                    <TextBox HorizontalAlignment="Left"  Height="23" PreviewTextInput="TextBox_PreviewTextInput" PreviewKeyDown="TextBox_PreviewKeyDown" PreviewMouseWheel="TextBox_PreviewMouseWheel" Margin="127,13,0,0" TextWrapping="Wrap" Text="{Binding CommandTimeout, Mode=TwoWay}" VerticalAlignment="Top" Width="251"/>
+                    <TextBox HorizontalAlignment="Left" Height="23" PreviewTextInput="TextBox_PreviewTextInput"
+                             PreviewKeyDown="TextBox_PreviewKeyDown" PreviewMouseWheel="TextBox_PreviewMouseWheel"
+                             Margin="127,13,0,0" TextWrapping="Wrap"
+                             Text="{Binding CommandTimeout, Mode=TwoWay}" VerticalAlignment="Top"
+                             Width="251" />
                     <Label Content="Command Timeout" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>
+                    <TextBox HorizontalAlignment="Left" Height="23" PreviewTextInput="TextBox_PreviewTextInput"
+                             PreviewKeyDown="TextBox_PreviewKeyDown" PreviewMouseWheel="TextBox_PreviewMouseWheel"
+                             Margin="127,66,0,0" TextWrapping="Wrap"
+                             Text="{Binding MaxSimultaneousCommands, Mode=TwoWay}" VerticalAlignment="Top"
+                             Width="251" />
+                    <Label Content="Command Limit" HorizontalAlignment="Left" Margin="10,65,0,0" VerticalAlignment="Top"/>
                     <Button Content="Close"  Margin="304,236,10,0" Click="OnCloseBtnClick" Height="20" VerticalAlignment="Top"/>
+                    <Label Content="Maximum number of simultaneous commands. 0 for infinite."
+                           HorizontalAlignment="Left" Margin="10,91,0,0" VerticalAlignment="Top" FontStyle="Italic"
+                           FontSize="12" />
+                    <Label Content="Per command timeout in seconds. 0 for infinite." HorizontalAlignment="Left"
+                           Margin="10,36,0,0" VerticalAlignment="Top" FontStyle="Italic" FontSize="12" />
                 </Grid>
             </TabItem>
         </TabControl>

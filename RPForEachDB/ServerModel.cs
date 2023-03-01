@@ -1,33 +1,28 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace RPForEachDB
+namespace RPForEachDB;
+
+public enum AuthenticationMode
 {
-    public enum AuthenticationMode
-    {
-        Windows,
-        SQL
-    }
+    Windows,
+    SQL
+}
 
-    [Serializable]
-    public class ServerModel: INotifyPropertyChanged
-    {
-        public event PropertyChangedEventHandler PropertyChanged;
+[Serializable]
+public class ServerModel: INotifyPropertyChanged
+{
+    public event PropertyChangedEventHandler PropertyChanged;
 
-        public string Name { get; set; } = "";
+    public string Name { get; set; } = "";
 
-        public string Server { get; set; } = "";
+    public string Server { get; set; } = "";
 
-        public string Username { get; set; } = "";
+    public string Username { get; set; } = "";
 
-        public string Password { get; set; } = "";
+    public string Password { get; set; } = "";
 
-        public AuthenticationMode AuthenticationMode { get; set; } = AuthenticationMode.Windows;
+    public AuthenticationMode AuthenticationMode { get; set; } = AuthenticationMode.Windows;
 
-        public string[] SelectedDatabases { get; set; } = new string[0];
-    }
+    public string[] SelectedDatabases { get; set; } = Array.Empty<string>();
 }

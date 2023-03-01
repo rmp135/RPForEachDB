@@ -3,8 +3,14 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:RPForEachDB"
         mc:Ignorable="d"
-        Title="RPForEachDB" Height="600" Width="800">
+        Title="RPForEachDB" Height="600" Width="800"  >
+    
+    <Window.DataContext>
+        <local:MainWindowViewModel />
+    </Window.DataContext>
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="auto"></RowDefinition>
@@ -17,7 +23,7 @@
                 <ColumnDefinition Width="auto"></ColumnDefinition>
             </Grid.ColumnDefinitions>
             <Button Grid.Column="0" Margin="0,0,5,0" Padding="5,0,5,0" Click="OnManageServersBtnClick" Content="Settings"/>
-            <ComboBox ItemsSource="{Binding Servers}" SelectedValue="{Binding CurrentServer}" DisplayMemberPath="Name" Grid.Column="1"  Margin="0,0,5,0" VerticalAlignment="Top" HorizontalContentAlignment="Stretch" SelectionChanged="ServerComboOnChange" Height="27" />
+            <ComboBox  ItemsSource="{Binding Servers}" SelectedValue="{Binding CurrentServer}" DisplayMemberPath="Name" Grid.Column="1"  Margin="0,0,5,0" VerticalAlignment="Top" HorizontalContentAlignment="Stretch" SelectionChanged="ServerComboOnChange" Height="27" />
             <Button Grid.Column="2" Padding="5,0,5,0" IsEnabled="{Binding IsGetDatabaseEnabled}" Click="OnGetDatabasesBtnClick">Get Databases</Button>
         </Grid>
         <Grid Grid.Row="1">
@@ -29,9 +35,28 @@
             </Grid.ColumnDefinitions>
             <DataGrid CanUserAddRows="False" SelectionChanged="DataGrid_SelectionChanged" SelectionMode="Single" HorizontalAlignment="Stretch" ColumnWidth="*" AutoGenerateColumns="False" ItemsSource="{Binding Databases}" Grid.ColumnSpan="2">
                 <DataGrid.Columns>
+                    
                     <DataGridTextColumn IsReadOnly="True" Header="Name" Binding="{Binding Name}" SortDirection="Ascending" />
                     <DataGridTextColumn IsReadOnly="True" Header="Status" Binding="{Binding Status}" />
                     <DataGridTemplateColumn Header="Run" Width="auto">
+                        <DataGridTemplateColumn.HeaderTemplate>
+                            <DataTemplate>
+                                <DockPanel>
+                                    <CheckBox 
+                                        IsThreeState="True"
+                                        Click="HeaderCheckBox_Click"
+                                        VerticalAlignment="Center"
+                                        IsChecked="{Binding DataContext.IsChecked, 
+                                        UpdateSourceTrigger=PropertyChanged,
+                                        RelativeSource={RelativeSource AncestorType={x:Type Window}}}"
+                                    />
+                                    <TextBlock
+                                        Text="{Binding Content, 
+                                        RelativeSource={RelativeSource Mode=TemplatedParent}}"       
+                                        Margin="5"/>
+                                </DockPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.HeaderTemplate>
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <CheckBox IsChecked="{Binding Checked, UpdateSourceTrigger=PropertyChanged}" Click="CheckBox_Click"/>
@@ -57,10 +82,17 @@
                         <ColumnDefinition Width="*"></ColumnDefinition>
                     </Grid.ColumnDefinitions>
                     <Button Grid.Column="0" Content="Load File" VerticalAlignment="Top" Width="auto" Click="OnOpenFileBtnClick"/>
-                    <Button Grid.Column="1" Click="OnRunBtnClick" Content="Run"/>
+                    <Button Grid.Column="1" Click="OnRunBtnClick" Content="Run" IsEnabled="{Binding IsRunEnabled, UpdateSourceTrigger=PropertyChanged}"/>
                 </Grid>
                 <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" DockPanel.Dock="Top" >
-                    <TextBox AcceptsReturn="True" AcceptsTab="True" IsReadOnly="False" TextWrapping="Wrap" Text="{Binding CurrentSQL}" Height="auto" />
+                    <TextBox 
+                        AcceptsReturn="True"
+                        AcceptsTab="True"
+                        IsReadOnly="False"
+                        TextWrapping="Wrap"
+                        Text="{Binding CurrentSQL, UpdateSourceTrigger=PropertyChanged}" 
+                        Height="auto" 
+                    />
                 </ScrollViewer>
                 <GridSplitter Grid.Row="2"
                     Height="2" Background="Gray" 

@@ -1,34 +1,30 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data.SqlClient;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Configuration;
-using RPForEachDB.Properties;
-using System.Security;
+﻿using Microsoft.Data.SqlClient;
 
-namespace RPForEachDB
+namespace RPForEachDB;
+
+public interface IConnectionFactory
 {
-    public class ConnectionFactory
+    SqlConnection Build(ServerModel serverModel);
+}
+
+public class ConnectionFactory : IConnectionFactory
+{
+    public SqlConnection Build(ServerModel serverModel)
     {
-        public SqlConnection Build(ServerModel serverModel)
+        var connectionStringBuilder = new SqlConnectionStringBuilder
         {
-            var connectionStringBuilder = new SqlConnectionStringBuilder
-            {
-                ConnectTimeout = 5,
-                DataSource = serverModel.Server,
-                IntegratedSecurity = serverModel.AuthenticationMode == AuthenticationMode.Windows,
-                UserID = serverModel.Username,
-                Password = serverModel.Password
-            };
-            SqlConnection connection;
-            connection = new SqlConnection(connectionStringBuilder.ToString());
-            if (connection.State == System.Data.ConnectionState.Closed)
-            {
-                connection.Open();
-            }
-            return connection;
+            ConnectTimeout = 5,
+            DataSource = serverModel.Server,
+            IntegratedSecurity = serverModel.AuthenticationMode == AuthenticationMode.Windows,
+            UserID = serverModel.Username,
+            TrustServerCertificate = true,
+            Password = serverModel.Password
+        };
+        var connection = new SqlConnection(connectionStringBuilder.ToString());
+        if (connection.State == System.Data.ConnectionState.Closed)
+        {
+            connection.Open();
         }
+        return connection;
     }
 }
